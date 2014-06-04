@@ -263,11 +263,15 @@ module.exports = function (grunt) {
 	});
 
 	grunt.registerTask('check-deploy', function() {
+		if (process.env.TRAVIS !== 'true' || process.env.TRAVIS_BRANCH !== 'master') {
+			grunt.log.writeln('not travis master, skipped deployment');
+		}
+
 		// need this
 		this.requires(['build']);
 
 		// only deploy under these conditions
-		if (process.env.TRAVIS === 'true' && process.env.TRAVIS_SECURE_ENV_VARS === 'true' && process.env.TRAVIS_PULL_REQUEST === 'false') {
+		if (process.env.TRAVIS_SECURE_ENV_VARS === 'true' && process.env.TRAVIS_PULL_REQUEST === 'false') {
 			grunt.log.writeln('executing deployment');
 			// queue deploy
 			grunt.task.run('gh-pages:deploy');

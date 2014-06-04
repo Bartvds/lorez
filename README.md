@@ -6,11 +6,15 @@ The canvas rendering ensures up-scaling with 100% crispy pixels while the WebGL 
 
 lorez is especially suited for 32x32 pixel micro games on large screens or class 320x240 gaming.
 
-Original code forked from [framebufferJS](https://github.com/noffle/framebufferJS) by [@noffle](http://www.twitter.com/noffle)
+Originally forked from [framebufferJS](https://github.com/noffle/framebufferJS) by [@noffle](http://www.twitter.com/noffle)
 
 Refactored and expanded in [TypeScript](http://www.typescriptlang.org/) with ♥ by [@bartvds](http://github.com/bartvds)
 
 Work-in-progress :sunglasses:
+
+## Demo
+
+Usage examples and demo gallery can be found on [bartvds.github.io/lorez](https://bartvds.github.io/lorez/)
 
 ## Get the code
 
@@ -86,4 +90,11 @@ They are very welcome.
 
 ## License
 
-MIT
+Copyright (c) 2014 [Bart van der Schoor](https://github.com/Bartvds)
+
+Licensed under the MIT license.
+
+Forked from [framebufferJS](https://github.com/noffle/framebufferJS) under MIT licence
+
+Copyright (c) 2014 [Stephen Whitmore](https://github.com/noffle)
+
