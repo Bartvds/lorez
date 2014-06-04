@@ -1,5 +1,7 @@
 # lorez
 
+[![Build Status](https://secure.travis-ci.org/Bartvds/lorez.svg?branch=master)](http://travis-ci.org/Bartvds/lorez) [![NPM version](https://badge.fury.io/js/lorez.png)](http://badge.fury.io/js/lorez) [![Dependency Status](https://david-dm.org/Bartvds/lorez.png)](https://david-dm.org/Bartvds/lorez) [![devDependency Status](https://david-dm.org/Bartvds/lorez/dev-status.png)](https://david-dm.org/Bartvds/lorez#info=devDependencies)
+
 Bitmap rendering system for low-res pixel rendering on big screens.
 
 The canvas rendering ensures up-scaling with 100% crispy pixels while the WebGL renderer runs easily at 60 frames-per-second in high resolutions. This works great on modern mobile devices. 
