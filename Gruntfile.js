@@ -5,9 +5,7 @@ module.exports = function (grunt) {
 	var fs = require('fs');
 	var path = require('path');
 	var assert = require('assert');
-
-	var browserify = require('browserify');
-	var exorcist = require('exorcist');
+	var webpack = require('webpack');
 
 	grunt.loadNpmTasks('grunt-contrib-jshint');
 	grunt.loadNpmTasks('grunt-contrib-clean');
@@ -16,7 +14,9 @@ module.exports = function (grunt) {
 	grunt.loadNpmTasks('grunt-contrib-copy');
 	grunt.loadNpmTasks('grunt-gh-pages');
 	grunt.loadNpmTasks('grunt-tslint');
+	grunt.loadNpmTasks('grunt-typedoc');
 	grunt.loadNpmTasks('grunt-ts');
+	grunt.loadNpmTasks('grunt-webpack');
 
 	// get a formatted commit message to review changes from the commit log
 	// github will turn some of these into clickable links
@@ -34,14 +34,10 @@ module.exports = function (grunt) {
 		return ret;
 	}
 
-	// list the files for reference (and verification)
-	var dist = {
-		basic: './dist/lorez.js',
-		demo: './demo/js/lorez.js',
-	};
+	var pkg = grunt.file.readJSON('package.json');
 
 	grunt.initConfig({
-		pkg: grunt.file.readJSON('package.json'),
+		pkg: pkg,
 		jshint: {
 			options: grunt.file.readJSON('.jshintrc'),
 			support: {
@@ -64,6 +60,9 @@ module.exports = function (grunt) {
 			],
 			tmp: [
 				'tmp/**/*'
+			],
+			docs: [
+				'docs/'
 			]
 		},
 		connect: {
@@ -81,7 +80,6 @@ module.exports = function (grunt) {
 		copy: {
 			lorez: {
 				files: [
-					{expand: true, cwd: 'dist/', src: ['lorez.js'], dest: 'demo/js/'},
 					{expand: true, cwd: '.', src: ['README.md'], dest: 'demo/'}
 				]
 			}
@@ -125,11 +123,78 @@ module.exports = function (grunt) {
 				fast: 'never',
 				target: 'es5',
 				module: 'commonjs',
+				removeComments: true,
 				sourceMap: true
 			},
 			index: {
 				src: ['./src/index.ts'],
 				outDir: './build'
+			}
+		},
+		typedoc: {
+			docs: {
+				options: {
+					name: pkg.name + ' - ' + pkg.description,
+					module: 'commonjs',
+					target: 'es5',
+					out: './docs'
+				},
+				src: ['./src']
+			}
+		},
+		webpack: {
+			options: {
+				entry: './build/index.js'
+			},
+			demo: {
+				devtool: 'source-map',
+				module: {
+					preLoaders: [
+						{
+							test: /\.js$/,
+							loader: 'source-map-loader'
+						}
+					]
+				},
+				output: {
+					library: 'lorez',
+					libraryTarget: 'umd',
+					path: './demo/js/',
+					sourceMapFilename: 'lorez.js.map',
+					filename: 'lorez.js'
+				}
+			},
+			dist: {
+				output: {
+					library: 'lorez',
+					libraryTarget: 'umd',
+					path: './dist/',
+					filename: 'lorez.js'
+				}
+			},
+			min: {
+				plugins: [
+					new webpack.optimize.UglifyJsPlugin()
+				],
+				output: {
+					library: 'lorez',
+					libraryTarget: 'umd',
+					path: './dist/',
+					filename: 'lorez.min.js'
+				}
+			}
+		},
+		verify: {
+			demo: {
+				list: [
+					'./demo/js/lorez.js'
+				]
+			},
+			dist: {
+				list: [
+					'./dist/lorez.js',
+					'./dist/lorez.min.js'
+				]
 			}
 		},
 		bundle: {
@@ -138,7 +203,7 @@ module.exports = function (grunt) {
 			},
 			index: {
 				main: './build/index.js',
-				bundle: dist.basic
+				bundle: './tmp/index.js'
 			}
 		}
 	});
@@ -156,16 +221,12 @@ module.exports = function (grunt) {
 	grunt.registerTask('build', [
 		'prep',
 		'ts:index',
-		// 'tslint:src',
-		'bundle:index',
-		// 'verify',
-		'copy:lorez'
+		'tslint:src',
+		'webpack:demo'
 	]);
 
 	grunt.registerTask('test', [
 		'build',
-		'tslint:src',
-		'verify'
 		// more!
 	]);
 
@@ -176,11 +237,16 @@ module.exports = function (grunt) {
 	grunt.registerTask('onwatch', [
 		'build'
 	]);
+	grunt.registerTask('docs', [
+		'clean:docs',
+		'typedoc:docs'
+	]);
 
-	// for development and demos
-	grunt.registerTask('dev', [
-		'prep',
-		'bundle:suite'
+	grunt.registerTask('dist', [
+		'build',
+		'webpack:dist',
+		'webpack:min',
+		'verify:dist',
 	]);
 
 	grunt.registerTask('publish', 'Publish from CLI', [
@@ -188,7 +254,7 @@ module.exports = function (grunt) {
 		'gh-pages:publish'
 	]);
 
-	grunt.registerTask('deploy', 'Publish from Travis',function() {
+	grunt.registerTask('deploy', 'Publish from Travis', function () {
 		if (process.env.TRAVIS !== 'true' || process.env.TRAVIS_BRANCH !== 'master') {
 			grunt.log.writeln('not travis master');
 			return;
@@ -207,7 +273,8 @@ module.exports = function (grunt) {
 	});
 
 	// check if we have all the important files
-	grunt.registerTask('verify', function () {
+	grunt.registerMultiTask('verify', function () {
+		var options = this.options({});
 		var missing = [];
 
 		function checkFile(file) {
@@ -219,12 +286,9 @@ module.exports = function (grunt) {
 			}
 		}
 
-		// check package.json main file
-		checkFile(grunt.config.get('pkg.main'));
-
 		// check dist files
-		Object.keys(dist).forEach(function (key) {
-			checkFile(dist[key]);
+		this.data.list.forEach(function (file) {
+			checkFile(file);
 		});
 
 		if (missing.length > 0) {
@@ -234,48 +298,5 @@ module.exports = function (grunt) {
 			});
 			grunt.fail.warn('missing files');
 		}
-	});
-
-	// custom browserify multi-task
-	grunt.registerMultiTask('bundle', function () {
-		var options = this.options({
-			// name of the UMD global
-			standalone: 'lorez'
-		});
-		// always source-map (minifyify expects this)
-		options.debug = true;
-
-		var done = this.async();
-
-		var mainFile = this.data.main;
-		var bundleFile = this.data.bundle;
-		var mapFile = bundleFile + '.map';
-
-		// make sure we have the directory (fs-stream is naive)
-		grunt.file.mkdir(path.dirname(bundleFile));
-
-		//setup stream
-		var bundle = new browserify();
-		bundle.add(mainFile);
-
-		/*bundle.plugin('minifyify', {
-			map: mapFile
-		});*/
-
-		var stream = bundle.bundle(options, function (err) {
-			if (err) {
-				grunt.log.error(mainFile);
-				console.log(err);
-				done(false);
-			}
-			else {
-				grunt.log.writeln('>> '.white + mainFile);
-				grunt.log.ok(bundleFile);
-				done();
-			}
-		});
-		// split source-map to own file
-		// stream = stream.pipe(exorcist(mapFile));
-		stream.pipe(fs.createWriteStream(bundleFile));
 	});
 };
