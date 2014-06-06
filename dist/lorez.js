@@ -982,7 +982,7 @@ return /******/ (function(modules) { // webpackBootstrap
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
-	var browser = __webpack_require__(22);
+	var browser = __webpack_require__(23);
 
 	function assertMode(scaleMode) {
 	    if ((typeof scaleMode === 'number' && scaleMode > 0) || scaleMode === 'max' || scaleMode === 'fit' || scaleMode === 'none') {
@@ -1290,7 +1290,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	'use strict';
 	var Bitmap = __webpack_require__(2);
-	var SpriteSheet = __webpack_require__(23);
+	var SpriteSheet = __webpack_require__(22);
 
 	var ImageDataLoader = __webpack_require__(12);
 
@@ -2002,24 +2002,6 @@ return /******/ (function(modules) { // webpackBootstrap
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
-	function getViewport() {
-	    var e = window;
-	    var a = 'inner';
-	    if (!('innerWidth' in window)) {
-	        a = 'client';
-	        e = document.documentElement || document.body;
-	    }
-	    return { width: e[a + 'Width'], height: e[a + 'Height'] };
-	}
-	exports.getViewport = getViewport;
-	//# sourceMappingURL=browser.js.map
-
-
-/***/ },
-/* 23 */
-/***/ function(module, exports, __webpack_require__) {
-
-	'use strict';
 	var SpriteSheet = (function () {
 	    function SpriteSheet(width, height) {
 	        this.sprites = [];
@@ -2045,6 +2027,24 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	module.exports = SpriteSheet;
 	//# sourceMappingURL=SpriteSheet.js.map
+
+
+/***/ },
+/* 23 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+	function getViewport() {
+	    var e = window;
+	    var a = 'inner';
+	    if (!('innerWidth' in window)) {
+	        a = 'client';
+	        e = document.documentElement || document.body;
+	    }
+	    return { width: e[a + 'Width'], height: e[a + 'Height'] };
+	}
+	exports.getViewport = getViewport;
+	//# sourceMappingURL=browser.js.map
 
 
 /***/ },
