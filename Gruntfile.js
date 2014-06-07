@@ -6,8 +6,6 @@ module.exports = function (grunt) {
 	var path = require('path');
 	var assert = require('assert');
 	var webpack = require('webpack');
-	var browserify = require('browserify');
-	var exorcist = require('exorcist');
 
 	grunt.loadNpmTasks('grunt-contrib-jshint');
 	grunt.loadNpmTasks('grunt-contrib-clean');
@@ -148,26 +146,9 @@ module.exports = function (grunt) {
 			}
 		},
 		webpack: {
-			ts: {
-				// NOTE this target exists help testing typescript-loader
-				entry: './src/index.ts',
-				// devtool: 'source-map',
-				module: {
-					loader: {
-						test: /\.ts$/,
-						loader: 'typescript-loader?module=commonjs'
-					}
-				},
-				resolve: {
-					extensions: ['', '.webpack.js', '.web.js', '.js', '.ts']
-				},
-				output: {
-					library: 'lorez',
-					libraryTarget: 'umd',
-					path: './tmp/',
-					sourceMapFilename: 'lorez.js.map',
-					filename: 'lorez.js'
-				}
+			options: {
+				progress: false,
+				failOnError: true
 			},
 			demo: {
 				entry: './build/index.js',
@@ -222,15 +203,6 @@ module.exports = function (grunt) {
 					'./dist/lorez.min.js'
 				]
 			}
-		},
-		bundle: {
-			options: {
-				standalone: 'lorez'
-			},
-			index: {
-				main: './src/index.ts',
-				bundle: './demo/js/lorez.js'
-			}
 		}
 	});
 
@@ -267,6 +239,7 @@ module.exports = function (grunt) {
 		'webpack:demo',
 		'webpack:dist',
 		'webpack:min',
+		'verify:demo',
 		'verify:dist'
 	]);
 
@@ -304,50 +277,6 @@ module.exports = function (grunt) {
 		else {
 			grunt.log.writeln('skipped deployment');
 		}
-	});
-
-	// NOTE this exists to test tsify-plugin
-	// custom browserify multi-task
-	grunt.registerMultiTask('bundle', function () {
-
-		var mainFile = this.data.main;
-		var bundleFile = this.data.bundle;
-		var mapFile = bundleFile + '.map';
-
-		var options = this.options({
-			standalone: 'lorez'
-		});
-		options.debug = true;
-
-		var done = this.async();
-
-		// make sure we have the directory (fs-stream is naive)
-		grunt.file.mkdir(path.dirname(bundleFile));
-
-		//setup stream
-		var bundle = new browserify();
-		bundle.add(mainFile);
-		bundle.plugin('tsify', {
-			target: 'es5',
-			removeComments: true,
-			noImplicitAny: false
-		});
-
-		var stream = bundle.bundle(options, function (err) {
-			if (err) {
-				grunt.log.error(mainFile);
-				console.log(err);
-				done(false);
-			}
-			else {
-				grunt.log.writeln('>> '.white + mainFile);
-				grunt.log.ok(bundleFile);
-				done();
-			}
-		});
-		// split source-map to own file
-		stream = stream.pipe(exorcist(mapFile));
-		stream.pipe(fs.createWriteStream(bundleFile));
 	});
 
 	// check if we have all the important files
